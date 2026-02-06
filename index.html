@@ -1,0 +1,726 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Digital Maze</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap");
+
+      :root {
+        --bg-1: #0b0f1a;
+        --bg-2: #111a2e;
+        --accent: #63f5c6;
+        --accent-2: #ffd166;
+        --block: #23304a;
+        --block-edge: #2f4063;
+        --text: #e6eefc;
+        --muted: #9bb0d1;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Space Grotesk", system-ui, -apple-system, sans-serif;
+        color: var(--text);
+        background: radial-gradient(1200px 700px at 15% 10%, #1b2a4a 0%, transparent 60%),
+          radial-gradient(900px 600px at 85% 20%, #1a2f3b 0%, transparent 65%),
+          linear-gradient(160deg, var(--bg-1), var(--bg-2));
+        display: grid;
+        place-items: center;
+        padding: 32px 18px 48px;
+      }
+
+      .frame {
+        width: min(960px, 92vw);
+        background: rgba(9, 14, 27, 0.8);
+        border: 1px solid rgba(120, 160, 255, 0.2);
+        border-radius: 22px;
+        padding: 24px 24px 20px;
+        box-shadow: 0 28px 60px rgba(5, 10, 20, 0.55);
+        backdrop-filter: blur(10px);
+      }
+
+      header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(1.6rem, 3vw, 2.2rem);
+        letter-spacing: 0.02em;
+      }
+
+      .sub {
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      .playfield {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 3 / 2;
+        background: linear-gradient(135deg, rgba(12, 20, 38, 0.9), rgba(8, 12, 22, 0.95));
+        border-radius: 18px;
+        border: 1px solid rgba(120, 160, 255, 0.15);
+        overflow: hidden;
+      }
+
+      .goal-banner {
+        position: absolute;
+        top: 10px;
+        right: 14px;
+        color: var(--accent-2);
+        font-size: 0.8rem;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        text-shadow: 0 0 12px rgba(255, 209, 102, 0.55);
+        pointer-events: none;
+      }
+
+      canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+
+      .hud {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 14px;
+        font-size: 0.9rem;
+        color: var(--muted);
+      }
+
+      .hud span {
+        background: rgba(20, 28, 48, 0.85);
+        border: 1px solid rgba(120, 160, 255, 0.15);
+        border-radius: 999px;
+        padding: 6px 12px;
+      }
+
+    </style>
+  </head>
+  <body>
+    <div class="frame">
+      <header>
+        <h1>Digital Maze</h1>
+        <div class="sub">Glide the neon orb through the maze without scraping the blocks.</div>
+      </header>
+
+      <div class="playfield">
+        <canvas id="game" width="900" height="600" tabindex="0"></canvas>
+        <div class="goal-banner">Reach the star</div>
+      </div>
+
+      <div class="hud">
+        <span>Move: `WASD` or Arrow Keys</span>
+        <span>Reset: `R`</span>
+        <span>New seed: `N`</span>
+        <span>Time: <strong id="timeValue">00:00.00</strong></span>
+        <span>Best: <strong id="bestValue">--:--.--</strong></span>
+        <span>Seed: <strong id="seedValue">000000</strong></span>
+      </div>
+    </div>
+
+    <script>
+      const canvas = document.getElementById("game");
+      const ctx = canvas.getContext("2d");
+      const seedValueEl = document.getElementById("seedValue");
+      const timeValueEl = document.getElementById("timeValue");
+      const bestValueEl = document.getElementById("bestValue");
+
+      const world = {
+        width: 900,
+        height: 600,
+      };
+
+      const grid = {
+        tile: 30,
+        cols: Math.floor(world.width / 30),
+        rows: Math.floor(world.height / 30),
+      };
+
+      const startCell = { x: 1, y: grid.rows - 2 };
+      const goalCell = { x: grid.cols - 2, y: 1 };
+
+      const player = {
+        x: 0,
+        y: 0,
+        radius: grid.tile * 0.4,
+        speed: 180,
+        maxSpeed: 720,
+        accel: 1560,
+        vx: 0,
+        vy: 0,
+        currentSpeed: 0,
+      };
+
+      const goal = { x: 0, y: 0, size: grid.tile * 0.9 };
+
+      let blocks = [];
+      let seed = 0;
+
+      const keys = new Set();
+      let lastTime = performance.now();
+      let won = false;
+      let elapsed = 0;
+      let bestTime = null;
+      let bestTimes = {};
+      let bestRuns = {};
+      let bestRun = null;
+      let currentRun = [];
+      let lastSample = 0;
+      let trailPoints = [];
+      let timerRunning = false;
+      let penaltyFlashUntil = 0;
+      const collisionPenalty = {
+        rate: 0.045,
+        minPerHit: 0.045,
+        maxPerHit: 0.6,
+      };
+      const storage = (() => {
+        try {
+          const testKey = "__orbit_maze__";
+          window.localStorage.setItem(testKey, "1");
+          window.localStorage.removeItem(testKey);
+          return window.localStorage;
+        } catch (error) {
+          return null;
+        }
+      })();
+
+      function mulberry32(seedValue) {
+        let t = seedValue >>> 0;
+        return () => {
+          t += 0x6d2b79f5;
+          let r = Math.imul(t ^ (t >>> 15), 1 | t);
+          r ^= r + Math.imul(r ^ (r >>> 7), 61 | r);
+          return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+        };
+      }
+
+      function hashSeed(input) {
+        if (typeof input === "number" && Number.isFinite(input)) {
+          return Math.floor(input) >>> 0;
+        }
+        const str = String(input);
+        let hash = 2166136261;
+        for (let i = 0; i < str.length; i++) {
+          hash ^= str.charCodeAt(i);
+          hash = Math.imul(hash, 16777619);
+        }
+        return hash >>> 0;
+      }
+
+      function getSeedFromUrl() {
+        const params = new URLSearchParams(window.location.search);
+        if (!params.has("seed")) return null;
+        const raw = params.get("seed");
+        if (!raw) return null;
+        const numeric = Number(raw);
+        if (Number.isFinite(numeric)) return numeric;
+        return raw;
+      }
+
+      function cellCenterX(cellX) {
+        return cellX * grid.tile + grid.tile / 2;
+      }
+
+      function cellCenterY(cellY) {
+        return cellY * grid.tile + grid.tile / 2;
+      }
+
+      function generateBlocks(seedValue) {
+        const rng = mulberry32(seedValue);
+        const gridData = Array.from({ length: grid.rows }, () => Array(grid.cols).fill(0));
+
+        for (let x = 0; x < grid.cols; x++) {
+          gridData[0][x] = 1;
+          gridData[grid.rows - 1][x] = 1;
+        }
+        for (let y = 0; y < grid.rows; y++) {
+          gridData[y][0] = 1;
+          gridData[y][grid.cols - 1] = 1;
+        }
+
+        const path = new Set();
+        let cx = startCell.x;
+        let cy = startCell.y;
+        const goalX = goalCell.x;
+        const goalY = goalCell.y;
+        const directions = [
+          [1, 0],
+          [-1, 0],
+          [0, 1],
+          [0, -1],
+        ];
+
+        const maxSteps = grid.cols * grid.rows * 4;
+        for (let step = 0; step < maxSteps; step++) {
+          path.add(`${cx},${cy}`);
+          if (cx === goalX && cy === goalY) break;
+
+          const preferred = [];
+          const dx = goalX - cx;
+          const dy = goalY - cy;
+          if (dx !== 0) preferred.push([Math.sign(dx), 0]);
+          if (dy !== 0) preferred.push([0, Math.sign(dy)]);
+
+          let chosen = null;
+          for (let attempt = 0; attempt < 4; attempt++) {
+            if (rng() < 0.7 && preferred.length > 0) {
+              chosen = preferred[Math.floor(rng() * preferred.length)];
+            } else {
+              chosen = directions[Math.floor(rng() * directions.length)];
+            }
+
+            const nx = cx + chosen[0];
+            const ny = cy + chosen[1];
+            if (nx > 0 && nx < grid.cols - 1 && ny > 0 && ny < grid.rows - 1) {
+              cx = nx;
+              cy = ny;
+              break;
+            }
+          }
+        }
+
+        while (cx !== goalX) {
+          cx += Math.sign(goalX - cx);
+          path.add(`${cx},${cy}`);
+        }
+        while (cy !== goalY) {
+          cy += Math.sign(goalY - cy);
+          path.add(`${cx},${cy}`);
+        }
+
+        const clearRadius = 1;
+        for (let y = startCell.y - clearRadius; y <= startCell.y + clearRadius; y++) {
+          for (let x = startCell.x - clearRadius; x <= startCell.x + clearRadius; x++) {
+            if (x > 0 && x < grid.cols - 1 && y > 0 && y < grid.rows - 1) {
+              path.add(`${x},${y}`);
+            }
+          }
+        }
+        for (let y = goalCell.y - clearRadius; y <= goalCell.y + clearRadius; y++) {
+          for (let x = goalCell.x - clearRadius; x <= goalCell.x + clearRadius; x++) {
+            if (x > 0 && x < grid.cols - 1 && y > 0 && y < grid.rows - 1) {
+              path.add(`${x},${y}`);
+            }
+          }
+        }
+
+        for (let y = 1; y < grid.rows - 1; y++) {
+          for (let x = 1; x < grid.cols - 1; x++) {
+            if (path.has(`${x},${y}`)) continue;
+            if (rng() < 0.28) gridData[y][x] = 1;
+          }
+        }
+
+        const newBlocks = [];
+        for (let y = 0; y < grid.rows; y++) {
+          for (let x = 0; x < grid.cols; x++) {
+            if (gridData[y][x] === 1) {
+              newBlocks.push({
+                x: x * grid.tile,
+                y: y * grid.tile,
+                w: grid.tile,
+                h: grid.tile,
+              });
+            }
+          }
+        }
+
+        return newBlocks;
+      }
+
+      function setSeed(newSeed) {
+        seed = hashSeed(newSeed);
+        blocks = generateBlocks(seed);
+        goal.x = cellCenterX(goalCell.x);
+        goal.y = cellCenterY(goalCell.y);
+        seedValueEl.textContent = seed.toString();
+        bestTime = bestTimes[String(seed)] ?? null;
+        bestRun = bestRuns[String(seed)] ?? null;
+        reset();
+      }
+
+      function reset() {
+        player.x = cellCenterX(startCell.x);
+        player.y = cellCenterY(startCell.y);
+        player.vx = 0;
+        player.vy = 0;
+        player.currentSpeed = 0;
+        won = false;
+        elapsed = 0;
+        timerRunning = false;
+        currentRun = [];
+        lastSample = 0;
+        trailPoints = [];
+      }
+
+      function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+      }
+
+      function circleRectCollision(cx, cy, r, rect) {
+        const closestX = clamp(cx, rect.x, rect.x + rect.w);
+        const closestY = clamp(cy, rect.y, rect.y + rect.h);
+        const dx = cx - closestX;
+        const dy = cy - closestY;
+        return dx * dx + dy * dy <= r * r;
+      }
+
+      function resolveMovement(dt) {
+        let desiredVX = 0;
+        let desiredVY = 0;
+
+        if (keys.has("ArrowUp") || keys.has("KeyW")) desiredVY -= 1;
+        if (keys.has("ArrowDown") || keys.has("KeyS")) desiredVY += 1;
+        if (keys.has("ArrowLeft") || keys.has("KeyA")) desiredVX -= 1;
+        if (keys.has("ArrowRight") || keys.has("KeyD")) desiredVX += 1;
+
+        const inputMagnitude = Math.hypot(desiredVX, desiredVY);
+        if (inputMagnitude > 0) {
+          player.currentSpeed = Math.min(player.maxSpeed, player.currentSpeed + player.accel * dt);
+        } else {
+          player.currentSpeed = Math.max(0, player.currentSpeed - player.accel * dt * 0.6);
+        }
+
+        const magnitude = inputMagnitude || 1;
+        const speed = inputMagnitude > 0 ? Math.max(player.speed, player.currentSpeed) : player.currentSpeed;
+        player.vx = (desiredVX / magnitude) * speed;
+        player.vy = (desiredVY / magnitude) * speed;
+
+        const nextX = player.x + player.vx * dt;
+        const nextY = player.y + player.vy * dt;
+
+        let candidateX = nextX;
+        let hitWall = false;
+        for (const block of blocks) {
+          if (circleRectCollision(candidateX, player.y, player.radius, block)) {
+            candidateX = player.x;
+            hitWall = true;
+            break;
+          }
+        }
+
+        let candidateY = nextY;
+        for (const block of blocks) {
+          if (circleRectCollision(candidateX, candidateY, player.radius, block)) {
+            candidateY = player.y;
+            hitWall = true;
+            break;
+          }
+        }
+
+        player.x = candidateX;
+        player.y = candidateY;
+
+        if (hitWall && timerRunning) {
+          const speed = Math.hypot(player.vx, player.vy);
+          const rawPenalty = speed * dt * collisionPenalty.rate;
+          const penalty = Math.max(collisionPenalty.minPerHit, Math.min(collisionPenalty.maxPerHit, rawPenalty));
+          elapsed += penalty;
+          penaltyFlashUntil = performance.now() + 140;
+        }
+      }
+
+      function drawBlocks(scale, offsetX, offsetY) {
+        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--block");
+        ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue("--block-edge");
+        ctx.lineWidth = 2;
+        for (const block of blocks) {
+          const x = offsetX + block.x * scale;
+          const y = offsetY + block.y * scale;
+          const w = block.w * scale;
+          const h = block.h * scale;
+          ctx.fillRect(x, y, w, h);
+          ctx.strokeRect(x, y, w, h);
+        }
+      }
+
+      function drawGoal(scale, offsetX, offsetY) {
+        const size = goal.size * scale;
+        const x = offsetX + goal.x * scale;
+        const y = offsetY + goal.y * scale;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.fillStyle = "rgba(255, 209, 102, 0.9)";
+        ctx.strokeStyle = "rgba(255, 209, 102, 0.4)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let i = 0; i < 5; i++) {
+          const angle = (Math.PI * 2 * i) / 5 - Math.PI / 2;
+          const innerAngle = angle + Math.PI / 5;
+          const outerRadius = size * 0.5;
+          const innerRadius = size * 0.22;
+          ctx.lineTo(Math.cos(angle) * outerRadius, Math.sin(angle) * outerRadius);
+          ctx.lineTo(Math.cos(innerAngle) * innerRadius, Math.sin(innerAngle) * innerRadius);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function drawPlayer(scale, offsetX, offsetY) {
+        const x = offsetX + player.x * scale;
+        const y = offsetY + player.y * scale;
+        const r = player.radius * scale;
+
+        const isPenalized = performance.now() < penaltyFlashUntil;
+        const gradient = ctx.createRadialGradient(x - r * 0.4, y - r * 0.4, r * 0.3, x, y, r);
+        if (isPenalized) {
+          gradient.addColorStop(0, "#fff7b0");
+          gradient.addColorStop(0.6, "#ffd166");
+          gradient.addColorStop(1, "#fbbf24");
+        } else {
+          gradient.addColorStop(0, "#9efeff");
+          gradient.addColorStop(0.6, "#63f5c6");
+          gradient.addColorStop(1, "#2dd4bf");
+        }
+
+        ctx.fillStyle = gradient;
+        ctx.shadowColor = isPenalized ? "rgba(255, 209, 102, 0.8)" : "rgba(90, 245, 210, 0.7)";
+        ctx.shadowBlur = 18;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+
+      function checkGoal() {
+        const dx = player.x - goal.x;
+        const dy = player.y - goal.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist < player.radius + goal.size * 0.4) {
+          won = true;
+          timerRunning = false;
+          if (bestTime === null || elapsed < bestTime) {
+            bestTime = elapsed;
+            if (storage) {
+              bestTimes[String(seed)] = bestTime;
+              storage.setItem("orbitMazeBestBySeed", JSON.stringify(bestTimes));
+              bestRuns[String(seed)] = currentRun;
+              storage.setItem("orbitMazeBestRunBySeed", JSON.stringify(bestRuns));
+              bestRun = currentRun;
+            }
+          }
+        }
+      }
+
+      function formatTime(value) {
+        const totalSeconds = Math.max(0, value);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = Math.floor(totalSeconds % 60);
+        const centis = Math.floor((totalSeconds * 100) % 100);
+        return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}.${String(centis).padStart(2, "0")}`;
+      }
+
+      function updateHud() {
+        timeValueEl.textContent = formatTime(elapsed);
+        bestValueEl.textContent = bestTime === null ? "--:--.--" : formatTime(bestTime);
+      }
+
+      function recordRunSample() {
+        if (!timerRunning || won) return;
+        const sampleInterval = 0.08;
+        if (elapsed - lastSample >= sampleInterval) {
+          currentRun.push({ t: elapsed, x: player.x, y: player.y });
+          lastSample = elapsed;
+        }
+      }
+
+      function updateTrail() {
+        if (!timerRunning || won) return;
+        trailPoints.push({ x: player.x, y: player.y, life: 1 });
+        if (trailPoints.length > 220) {
+          trailPoints.shift();
+        }
+      }
+
+      function drawTrail(scale, offsetX, offsetY) {
+        if (trailPoints.length < 2) return;
+        ctx.save();
+        for (let i = 1; i < trailPoints.length; i++) {
+          const prev = trailPoints[i - 1];
+          const point = trailPoints[i];
+          point.life *= 0.975;
+          const alpha = Math.max(0.04, point.life * (i / trailPoints.length));
+          ctx.strokeStyle = `rgba(110, 220, 210, ${alpha})`;
+          ctx.lineWidth = 9 * scale * (i / trailPoints.length);
+          ctx.beginPath();
+          ctx.moveTo(offsetX + prev.x * scale, offsetY + prev.y * scale);
+          ctx.lineTo(offsetX + point.x * scale, offsetY + point.y * scale);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      function drawGhost(scale, offsetX, offsetY) {
+        if (!bestRun || bestRun.length < 2 || timerRunning === false) return;
+        const ghostTime = Math.min(elapsed, bestRun[bestRun.length - 1].t);
+        let idx = 0;
+        while (idx < bestRun.length - 1 && bestRun[idx + 1].t < ghostTime) {
+          idx++;
+        }
+        const a = bestRun[idx];
+        const b = bestRun[Math.min(idx + 1, bestRun.length - 1)];
+        const span = Math.max(0.001, b.t - a.t);
+        const t = Math.min(1, Math.max(0, (ghostTime - a.t) / span));
+        const gx = a.x + (b.x - a.x) * t;
+        const gy = a.y + (b.y - a.y) * t;
+        const r = player.radius * scale;
+        ctx.save();
+        ctx.globalAlpha = 0.35;
+        ctx.fillStyle = "#7dd3fc";
+        ctx.shadowColor = "rgba(125, 211, 252, 0.6)";
+        ctx.shadowBlur = 12;
+        ctx.beginPath();
+        ctx.arc(offsetX + gx * scale, offsetY + gy * scale, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      function render() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        const scale = Math.min(canvas.width / world.width, canvas.height / world.height);
+        const offsetX = (canvas.width - world.width * scale) / 2;
+        const offsetY = (canvas.height - world.height * scale) / 2;
+
+        ctx.fillStyle = "rgba(15, 24, 44, 0.9)";
+        ctx.fillRect(offsetX, offsetY, world.width * scale, world.height * scale);
+
+        drawBlocks(scale, offsetX, offsetY);
+        drawTrail(scale, offsetX, offsetY);
+        drawGhost(scale, offsetX, offsetY);
+        drawGoal(scale, offsetX, offsetY);
+        drawPlayer(scale, offsetX, offsetY);
+
+        if (won) {
+          ctx.fillStyle = "rgba(10, 15, 30, 0.65)";
+          ctx.fillRect(offsetX, offsetY, world.width * scale, world.height * scale);
+          ctx.fillStyle = "#fef3c7";
+          ctx.font = `${32 * scale}px "Space Grotesk", sans-serif`;
+          ctx.textAlign = "center";
+          ctx.fillText("You made it!", offsetX + (world.width * scale) / 2, offsetY + (world.height * scale) / 2);
+          ctx.font = `${16 * scale}px "Space Grotesk", sans-serif`;
+          ctx.fillText(
+            "Press R to retry or N for a new seed",
+            offsetX + (world.width * scale) / 2,
+            offsetY + (world.height * scale) / 2 + 32
+          );
+        }
+      }
+
+      function loop(now) {
+        const dt = Math.min((now - lastTime) / 1000, 0.02);
+        lastTime = now;
+
+        if (!won) {
+          if (timerRunning) {
+            elapsed += dt;
+            recordRunSample();
+            updateTrail();
+          }
+          resolveMovement(dt);
+          checkGoal();
+        }
+
+        updateHud();
+        render();
+        requestAnimationFrame(loop);
+      }
+
+      const movementKeys = new Set(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "KeyW", "KeyA", "KeyS", "KeyD"]);
+
+      function isGameFocused() {
+        return document.activeElement === canvas;
+      }
+
+      window.addEventListener("keydown", (event) => {
+        if (movementKeys.has(event.code)) {
+          if (isGameFocused()) {
+            event.preventDefault();
+          }
+        }
+        keys.add(event.code);
+        if (event.code === "KeyR") reset();
+        if (event.code === "KeyN") setSeed(Date.now());
+      });
+
+      window.addEventListener("keyup", (event) => {
+        if (movementKeys.has(event.code)) {
+          if (isGameFocused()) {
+            event.preventDefault();
+          }
+        }
+        keys.delete(event.code);
+      });
+
+      function hasMovementInput() {
+        return (
+          keys.has("ArrowUp") ||
+          keys.has("ArrowDown") ||
+          keys.has("ArrowLeft") ||
+          keys.has("ArrowRight") ||
+          keys.has("KeyW") ||
+          keys.has("KeyA") ||
+          keys.has("KeyS") ||
+          keys.has("KeyD")
+        );
+      }
+
+      window.addEventListener("keydown", () => {
+        if (!timerRunning && !won && hasMovementInput()) {
+          timerRunning = true;
+        }
+      });
+
+      if (storage) {
+        const storedBestMap = storage.getItem("orbitMazeBestBySeed");
+        if (storedBestMap) {
+          try {
+            const parsed = JSON.parse(storedBestMap);
+            if (parsed && typeof parsed === "object") {
+              bestTimes = parsed;
+            }
+          } catch (error) {
+            bestTimes = {};
+          }
+        }
+        const storedBestRunMap = storage.getItem("orbitMazeBestRunBySeed");
+        if (storedBestRunMap) {
+          try {
+            const parsed = JSON.parse(storedBestRunMap);
+            if (parsed && typeof parsed === "object") {
+              bestRuns = parsed;
+            }
+          } catch (error) {
+            bestRuns = {};
+          }
+        }
+      }
+
+      const initialSeed = getSeedFromUrl() ?? Date.now();
+      setSeed(initialSeed);
+      canvas.focus();
+      canvas.addEventListener("pointerdown", () => {
+        canvas.focus();
+      });
+      requestAnimationFrame(loop);
+    </script>
+  </body>
+</html>
