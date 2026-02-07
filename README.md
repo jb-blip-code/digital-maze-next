@@ -1,10 +1,14 @@
-# Digital Maze Next
+# Digital Maze 3D
 
-This project is scaffolded from the existing `Digital Maze` base.
+Browser-based 3D maze game using Three.js and a seeded maze generator.
 
 ## Run
-Open `index.html` in a browser.
+1. Primary (no local server): open `index.html` directly in a modern browser.
+2. Fallback: use a local static server only if your browser blocks local file execution.
 
-## Base Source
-Copied from:
-- `/Users/jbenyeda/Documents/New project/index.html`
+Note: internet access is still required because Three.js is loaded from CDN.
+
+## Controls
+- Move: `WASD` or Arrow keys
+- Reset run: `R`
+- Generate new seed: `N`

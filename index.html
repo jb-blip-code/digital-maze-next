@@ -3,19 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Digital Maze</title>
+    <title>Digital Maze 3D</title>
     <style>
-      @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap");
+      @import url("https://fonts.googleapis.com/css2?family=Audiowide&family=Rajdhani:wght@500;700&display=swap");
 
       :root {
-        --bg-1: #0b0f1a;
-        --bg-2: #111a2e;
-        --accent: #63f5c6;
-        --accent-2: #ffd166;
-        --block: #23304a;
-        --block-edge: #2f4063;
-        --text: #e6eefc;
-        --muted: #9bb0d1;
+        --bg-a: #14002b;
+        --bg-b: #003d77;
+        --card: rgba(15, 8, 42, 0.82);
+        --line: rgba(55, 255, 236, 0.85);
+        --text: #e9fbff;
+        --muted: #b8e9ff;
+        --accent: #ff4fd8;
+        --accent-2: #37ffec;
       }
 
       * {
@@ -25,180 +25,234 @@
       body {
         margin: 0;
         min-height: 100vh;
-        font-family: "Space Grotesk", system-ui, -apple-system, sans-serif;
+        font-family: "Rajdhani", "Trebuchet MS", sans-serif;
         color: var(--text);
-        background: radial-gradient(1200px 700px at 15% 10%, #1b2a4a 0%, transparent 60%),
-          radial-gradient(900px 600px at 85% 20%, #1a2f3b 0%, transparent 65%),
-          linear-gradient(160deg, var(--bg-1), var(--bg-2));
+        background: radial-gradient(960px 520px at 12% 10%, #ff2f9f 0%, transparent 56%),
+          radial-gradient(860px 540px at 88% 18%, #22d3ff 0%, transparent 60%),
+          radial-gradient(880px 620px at 50% 100%, #5a00ff 0%, transparent 62%),
+          linear-gradient(155deg, var(--bg-a), var(--bg-b));
         display: grid;
         place-items: center;
-        padding: 32px 18px 48px;
+        padding: 24px 14px 34px;
       }
 
       .frame {
-        width: min(960px, 92vw);
-        background: rgba(9, 14, 27, 0.8);
-        border: 1px solid rgba(120, 160, 255, 0.2);
-        border-radius: 22px;
-        padding: 24px 24px 20px;
-        box-shadow: 0 28px 60px rgba(5, 10, 20, 0.55);
-        backdrop-filter: blur(10px);
+        width: min(1080px, 96vw);
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        box-shadow: 0 28px 68px rgba(0, 0, 0, 0.52), 0 0 34px rgba(55, 255, 236, 0.22), 0 0 40px rgba(255, 79, 216, 0.2);
+        backdrop-filter: blur(8px);
+        overflow: hidden;
+        position: relative;
       }
 
-      header {
+      .frame::before {
+        content: "";
+        position: absolute;
+        inset: -30% -15%;
+        pointer-events: none;
+        background: radial-gradient(circle at 18% 14%, rgba(255, 79, 216, 0.28), transparent 45%),
+          radial-gradient(circle at 84% 22%, rgba(55, 255, 236, 0.24), transparent 42%),
+          radial-gradient(circle at 52% 88%, rgba(91, 122, 255, 0.22), transparent 46%);
+        filter: blur(24px);
+      }
+
+      .frame::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient(120deg, rgba(255, 79, 216, 0.08), transparent 30%, rgba(55, 255, 236, 0.08) 60%, transparent 78%);
+        mix-blend-mode: screen;
+      }
+
+      .top {
+        padding: 16px 18px 10px;
         display: flex;
         flex-wrap: wrap;
-        align-items: baseline;
+        gap: 10px;
+        align-items: flex-end;
         justify-content: space-between;
-        gap: 12px;
-        margin-bottom: 16px;
       }
 
       h1 {
         margin: 0;
-        font-size: clamp(1.6rem, 3vw, 2.2rem);
-        letter-spacing: 0.02em;
+        font-family: "Audiowide", sans-serif;
+        font-size: clamp(1.3rem, 2.3vw, 2rem);
+        letter-spacing: 0.035em;
+        color: #ffb7ff;
+        text-shadow: 0 0 18px rgba(255, 79, 216, 0.85), 0 0 34px rgba(255, 79, 216, 0.5);
       }
 
       .sub {
         color: var(--muted);
-        font-size: 0.95rem;
+        font-size: 0.96rem;
       }
 
       .playfield {
         position: relative;
         width: 100%;
-        aspect-ratio: 3 / 2;
-        background: linear-gradient(135deg, rgba(12, 20, 38, 0.9), rgba(8, 12, 22, 0.95));
-        border-radius: 18px;
-        border: 1px solid rgba(120, 160, 255, 0.15);
-        overflow: hidden;
+        aspect-ratio: 16 / 9;
+        border-top: 1px solid rgba(55, 255, 236, 0.32);
+        border-bottom: 1px solid rgba(255, 79, 216, 0.32);
       }
 
-      .goal-banner {
+      .playfield::before {
+        content: "";
         position: absolute;
-        top: 10px;
-        right: 14px;
-        color: var(--accent-2);
-        font-size: 0.8rem;
-        letter-spacing: 0.03em;
-        text-transform: uppercase;
-        text-shadow: 0 0 12px rgba(255, 209, 102, 0.55);
+        inset: 0;
         pointer-events: none;
+        background: repeating-linear-gradient(
+          to bottom,
+          rgba(55, 255, 236, 0.05) 0px,
+          rgba(55, 255, 236, 0.05) 2px,
+          transparent 2px,
+          transparent 6px
+        );
+        mix-blend-mode: screen;
+        opacity: 0.65;
       }
 
       canvas {
         width: 100%;
         height: 100%;
         display: block;
+        filter: saturate(1.65) brightness(1.14) contrast(1.1) drop-shadow(0 0 18px rgba(55, 255, 236, 0.48))
+          drop-shadow(0 0 20px rgba(255, 79, 216, 0.35));
+      }
+
+      .banner {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        pointer-events: none;
+        background: rgba(37, 8, 62, 0.74);
+        border: 1px solid rgba(55, 255, 236, 0.74);
+        border-radius: 999px;
+        padding: 5px 11px;
+        color: #a6fff8;
+        font-size: 0.78rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        text-shadow: 0 0 14px rgba(55, 255, 236, 0.75), 0 0 24px rgba(55, 255, 236, 0.42);
+      }
+
+      .hit-toast {
+        position: absolute;
+        left: 0;
+        top: 0;
+        pointer-events: none;
+        font-family: "Audiowide", sans-serif;
+        font-size: 0.72rem;
+        letter-spacing: 0.04em;
+        color: #ffe86c;
+        text-shadow: 0 0 10px rgba(255, 225, 90, 0.95), 0 0 18px rgba(255, 186, 69, 0.6);
+        opacity: 0;
+        transform: translate(-50%, -50%);
+        will-change: transform, opacity;
       }
 
       .hud {
+        padding: 12px 14px 14px;
         display: flex;
         flex-wrap: wrap;
-        gap: 12px;
-        margin-top: 14px;
-        font-size: 0.9rem;
+        gap: 8px;
+        font-size: 0.88rem;
         color: var(--muted);
       }
 
       .hud span {
-        background: rgba(20, 28, 48, 0.85);
-        border: 1px solid rgba(120, 160, 255, 0.15);
+        background: rgba(18, 14, 56, 0.72);
+        border: 1px solid rgba(125, 232, 255, 0.62);
         border-radius: 999px;
         padding: 6px 12px;
+        box-shadow: inset 0 0 14px rgba(55, 255, 236, 0.22), 0 0 16px rgba(255, 79, 216, 0.18);
       }
 
+      .hud strong {
+        color: var(--accent-2);
+        text-shadow: 0 0 12px rgba(55, 255, 236, 0.72);
+      }
+
+      .note {
+        color: #ffb8f6;
+        text-shadow: 0 0 14px rgba(255, 79, 216, 0.58);
+      }
     </style>
   </head>
   <body>
     <div class="frame">
-      <header>
-        <h1>Digital Maze</h1>
-        <div class="sub">Glide the neon orb through the maze without scraping the blocks.</div>
-      </header>
+      <div class="top">
+        <div>
+          <h1>Digital Maze 3D</h1>
+          <div class="sub">Steer the orb through the maze in 3D space. Avoid wall contact penalties.</div>
+        </div>
+      </div>
 
       <div class="playfield">
-        <canvas id="game" width="900" height="600" tabindex="0"></canvas>
-        <div class="goal-banner">Reach the star</div>
+        <canvas id="game" tabindex="0"></canvas>
+        <div class="banner">Reach the beacon</div>
+        <div id="hitToast" class="hit-toast">+0.00s</div>
       </div>
 
       <div class="hud">
-        <span>Move: `WASD` or Arrow Keys</span>
-        <span>Reset: `R`</span>
-        <span>New seed: `N`</span>
+        <span>Tilt: <strong>WASD / Arrow Keys</strong></span>
+        <span>Reset: <strong>R</strong></span>
+        <span>New seed: <strong>N</strong></span>
         <span>Time: <strong id="timeValue">00:00.00</strong></span>
         <span>Best: <strong id="bestValue">--:--.--</strong></span>
         <span>Seed: <strong id="seedValue">000000</strong></span>
+        <span id="buildValue"><strong>Build:</strong> neon-v14</span>
+        <span id="stateValue" class="note">Ready</span>
       </div>
     </div>
 
+    <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
     <script>
       const canvas = document.getElementById("game");
-      const ctx = canvas.getContext("2d");
-      const seedValueEl = document.getElementById("seedValue");
       const timeValueEl = document.getElementById("timeValue");
       const bestValueEl = document.getElementById("bestValue");
+      const seedValueEl = document.getElementById("seedValue");
+      const stateValueEl = document.getElementById("stateValue");
+      const hitToastEl = document.getElementById("hitToast");
 
-      const world = {
-        width: 900,
-        height: 600,
-      };
+      if (!window.WebGLRenderingContext || !window.THREE) {
+        stateValueEl.textContent = "3D engine unavailable (check internet)";
+      } else {
+      const THREE = window.THREE;
+      try {
 
-      const grid = {
-        tile: 30,
-        cols: Math.floor(world.width / 30),
-        rows: Math.floor(world.height / 30),
-      };
-
-      const startCell = { x: 1, y: grid.rows - 2 };
-      const goalCell = { x: grid.cols - 2, y: 1 };
-
-      const player = {
-        x: 0,
-        y: 0,
-        radius: grid.tile * 0.4,
-        speed: 180,
-        maxSpeed: 720,
-        accel: 1560,
-        vx: 0,
-        vy: 0,
-        currentSpeed: 0,
-      };
-
-      const goal = { x: 0, y: 0, size: grid.tile * 0.9 };
-
-      let blocks = [];
-      let seed = 0;
-
-      const keys = new Set();
-      let lastTime = performance.now();
-      let won = false;
-      let elapsed = 0;
-      let bestTime = null;
-      let bestTimes = {};
-      let bestRuns = {};
-      let bestRun = null;
-      let currentRun = [];
-      let lastSample = 0;
-      let trailPoints = [];
-      let timerRunning = false;
-      let penaltyFlashUntil = 0;
-      const collisionPenalty = {
-        rate: 0.045,
-        minPerHit: 0.045,
-        maxPerHit: 0.6,
-      };
       const storage = (() => {
         try {
-          const testKey = "__orbit_maze__";
-          window.localStorage.setItem(testKey, "1");
-          window.localStorage.removeItem(testKey);
+          const key = "__maze_3d__";
+          window.localStorage.setItem(key, "1");
+          window.localStorage.removeItem(key);
           return window.localStorage;
-        } catch (error) {
+        } catch {
           return null;
         }
       })();
+
+      function safeStorageSet(key, value) {
+        if (!storage) return;
+        try {
+          storage.setItem(key, value);
+        } catch {
+          // Ignore write failures.
+        }
+      }
+
+      function hashSeed(input) {
+        if (typeof input === "number" && Number.isFinite(input)) return Math.floor(input) >>> 0;
+        const str = String(input);
+        let hash = 2166136261;
+        for (let i = 0; i < str.length; i++) {
+          hash ^= str.charCodeAt(i);
+          hash = Math.imul(hash, 16777619);
+        }
+        return hash >>> 0;
+      }
 
       function mulberry32(seedValue) {
         let t = seedValue >>> 0;
@@ -210,322 +264,459 @@
         };
       }
 
-      function hashSeed(input) {
-        if (typeof input === "number" && Number.isFinite(input)) {
-          return Math.floor(input) >>> 0;
-        }
-        const str = String(input);
-        let hash = 2166136261;
-        for (let i = 0; i < str.length; i++) {
-          hash ^= str.charCodeAt(i);
-          hash = Math.imul(hash, 16777619);
-        }
-        return hash >>> 0;
-      }
-
       function getSeedFromUrl() {
         const params = new URLSearchParams(window.location.search);
         if (!params.has("seed")) return null;
         const raw = params.get("seed");
         if (!raw) return null;
         const numeric = Number(raw);
-        if (Number.isFinite(numeric)) return numeric;
-        return raw;
+        return Number.isFinite(numeric) ? numeric : raw;
       }
 
-      function cellCenterX(cellX) {
-        return cellX * grid.tile + grid.tile / 2;
+      function formatTime(value) {
+        const total = Math.max(0, value);
+        const min = Math.floor(total / 60);
+        const sec = Math.floor(total % 60);
+        const centi = Math.floor((total * 100) % 100);
+        return `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}.${String(centi).padStart(2, "0")}`;
       }
 
-      function cellCenterY(cellY) {
-        return cellY * grid.tile + grid.tile / 2;
+      const world = {
+        cols: 30,
+        rows: 20,
+        tile: 1,
+      };
+
+      const startCell = { x: 1, y: world.rows - 2 };
+      const goalCell = { x: world.cols - 2, y: 1 };
+      const wallHeight = 1.15;
+
+      let seed = 0;
+      let elapsed = 0;
+      let bestBySeed = {};
+      let bestTime = null;
+      let won = false;
+      let timerRunning = false;
+      let penaltyFlashUntil = 0;
+      let hitToastUntil = 0;
+      let lastTime = performance.now();
+      const collisionPenalty = {
+        rate: 0.06,
+        minPerHit: 0.05,
+        maxPerHit: 0.65,
+      };
+
+      const player = {
+        radius: 0.34,
+        x: 0,
+        y: 0,
+        vx: 0,
+        vy: 0,
+      };
+      const physics = {
+        gravity: 36,
+        damping: 2.9,
+        maxSpeed: 18,
+        restitution: 0.12,
+      };
+      const tilt = {
+        x: 0,
+        y: 0,
+        targetX: 0,
+        targetY: 0,
+        max: 0.28,
+        response: 7.5,
+      };
+
+      const keys = new Set();
+      const moveKeys = new Set(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "KeyW", "KeyA", "KeyS", "KeyD"]);
+
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 2.15;
+
+      const scene = new THREE.Scene();
+      scene.fog = new THREE.Fog(0x2a0b4d, 18, 82);
+
+      const tablePivot = new THREE.Group();
+      tablePivot.position.set(world.cols / 2, 0, world.rows / 2);
+      scene.add(tablePivot);
+      const tableGroup = new THREE.Group();
+      tableGroup.position.set(-world.cols / 2, 0, -world.rows / 2);
+      tablePivot.add(tableGroup);
+
+      const camera = new THREE.PerspectiveCamera(58, 16 / 9, 0.1, 140);
+
+      const ambient = new THREE.AmbientLight(0xb8e8ff, 1.7);
+      scene.add(ambient);
+      const dir = new THREE.DirectionalLight(0xff7ae0, 2.6);
+      dir.position.set(8, 12, 6);
+      scene.add(dir);
+      const fill = new THREE.PointLight(0x37ffec, 2.2, 70);
+      fill.position.set(world.cols * 0.45, 8.5, world.rows * 0.52);
+      scene.add(fill);
+      const rim = new THREE.PointLight(0xff4fd8, 1.9, 62);
+      rim.position.set(world.cols * 0.62, 7.8, world.rows * 0.34);
+      scene.add(rim);
+
+      const floorGeo = new THREE.PlaneGeometry(world.cols, world.rows, world.cols, world.rows);
+      const floorMat = new THREE.MeshStandardMaterial({
+        color: 0x1a0f56,
+        emissive: 0x2a2b8f,
+        emissiveIntensity: 1.2,
+        roughness: 0.34,
+        metalness: 0.22,
+      });
+      const floor = new THREE.Mesh(floorGeo, floorMat);
+      floor.rotation.x = -Math.PI / 2;
+      floor.position.set(world.cols / 2, 0, world.rows / 2);
+      tableGroup.add(floor);
+
+      const gridHelper = new THREE.GridHelper(world.cols, world.cols, 0x37ffec, 0xff4fd8);
+      gridHelper.position.set(world.cols / 2, 0.01, world.rows / 2);
+      tableGroup.add(gridHelper);
+
+      const playerMesh = new THREE.Mesh(
+        new THREE.SphereGeometry(player.radius, 24, 18),
+        new THREE.MeshStandardMaterial({
+          color: 0xd7fffd,
+          emissive: 0x37ffec,
+          emissiveIntensity: 2.5,
+          roughness: 0.12,
+          metalness: 0.26,
+        })
+      );
+      tableGroup.add(playerMesh);
+
+      const goalMesh = new THREE.Mesh(
+        new THREE.OctahedronGeometry(0.38, 0),
+        new THREE.MeshStandardMaterial({
+          color: 0xffdbff,
+          emissive: 0xff4fd8,
+          emissiveIntensity: 2.7,
+          roughness: 0.08,
+          metalness: 0.5,
+        })
+      );
+      tableGroup.add(goalMesh);
+
+      const beaconBeam = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.08, 0.34, 6.5, 24, 1, true),
+        new THREE.MeshBasicMaterial({
+          color: 0x52fff0,
+          transparent: true,
+          opacity: 0.4,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+          side: THREE.DoubleSide,
+        })
+      );
+      beaconBeam.position.set(0, 3.15, 0);
+      goalMesh.add(beaconBeam);
+
+      function makeGlowSprite(colorHex, size, intensity = 1) {
+        const glowCanvas = document.createElement("canvas");
+        glowCanvas.width = 128;
+        glowCanvas.height = 128;
+        const glowCtx = glowCanvas.getContext("2d");
+        const gradient = glowCtx.createRadialGradient(64, 64, 8, 64, 64, 62);
+        const color = new THREE.Color(colorHex);
+        const r = Math.round(color.r * 255);
+        const g = Math.round(color.g * 255);
+        const b = Math.round(color.b * 255);
+        gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, ${0.95 * intensity})`);
+        gradient.addColorStop(0.3, `rgba(${r}, ${g}, ${b}, ${0.45 * intensity})`);
+        gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
+        glowCtx.fillStyle = gradient;
+        glowCtx.fillRect(0, 0, 128, 128);
+        const texture = new THREE.CanvasTexture(glowCanvas);
+        const material = new THREE.SpriteMaterial({
+          map: texture,
+          color: colorHex,
+          transparent: true,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+        });
+        const sprite = new THREE.Sprite(material);
+        sprite.scale.set(size, size, 1);
+        return sprite;
       }
 
-      function generateBlocks(seedValue) {
+      const playerGlow = makeGlowSprite(0x37ffec, 1.9, 1);
+      playerGlow.position.set(0, 0.03, 0);
+      playerMesh.add(playerGlow);
+      const goalGlow = makeGlowSprite(0xff4fd8, 2.4, 1.2);
+      goalGlow.position.set(0, 0.05, 0);
+      goalMesh.add(goalGlow);
+      const playerLamp = new THREE.PointLight(0x37ffec, 1.9, 8);
+      playerLamp.position.set(0, 0.6, 0);
+      playerMesh.add(playerLamp);
+      const goalLamp = new THREE.PointLight(0xff4fd8, 2.4, 11);
+      goalLamp.position.set(0, 0.75, 0);
+      goalMesh.add(goalLamp);
+
+      let wallBoxes = [];
+      let wallGroup = new THREE.Group();
+      tableGroup.add(wallGroup);
+
+      function cellCenter(cellX, cellY) {
+        return { x: cellX + 0.5, y: cellY + 0.5 };
+      }
+
+      function generateMaze(seedValue) {
         const rng = mulberry32(seedValue);
-        const gridData = Array.from({ length: grid.rows }, () => Array(grid.cols).fill(0));
+        const grid = Array.from({ length: world.rows }, () => Array(world.cols).fill(0));
 
-        for (let x = 0; x < grid.cols; x++) {
-          gridData[0][x] = 1;
-          gridData[grid.rows - 1][x] = 1;
+        for (let x = 0; x < world.cols; x++) {
+          grid[0][x] = 1;
+          grid[world.rows - 1][x] = 1;
         }
-        for (let y = 0; y < grid.rows; y++) {
-          gridData[y][0] = 1;
-          gridData[y][grid.cols - 1] = 1;
+        for (let y = 0; y < world.rows; y++) {
+          grid[y][0] = 1;
+          grid[y][world.cols - 1] = 1;
         }
 
         const path = new Set();
         let cx = startCell.x;
         let cy = startCell.y;
-        const goalX = goalCell.x;
-        const goalY = goalCell.y;
-        const directions = [
-          [1, 0],
-          [-1, 0],
-          [0, 1],
-          [0, -1],
-        ];
+        const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 
-        const maxSteps = grid.cols * grid.rows * 4;
-        for (let step = 0; step < maxSteps; step++) {
+        for (let i = 0; i < world.cols * world.rows * 4; i++) {
           path.add(`${cx},${cy}`);
-          if (cx === goalX && cy === goalY) break;
+          if (cx === goalCell.x && cy === goalCell.y) break;
 
           const preferred = [];
-          const dx = goalX - cx;
-          const dy = goalY - cy;
+          const dx = goalCell.x - cx;
+          const dy = goalCell.y - cy;
           if (dx !== 0) preferred.push([Math.sign(dx), 0]);
           if (dy !== 0) preferred.push([0, Math.sign(dy)]);
 
-          let chosen = null;
-          for (let attempt = 0; attempt < 4; attempt++) {
-            if (rng() < 0.7 && preferred.length > 0) {
-              chosen = preferred[Math.floor(rng() * preferred.length)];
-            } else {
-              chosen = directions[Math.floor(rng() * directions.length)];
-            }
+          let move = dirs[Math.floor(rng() * dirs.length)];
+          if (preferred.length && rng() < 0.72) {
+            move = preferred[Math.floor(rng() * preferred.length)];
+          }
 
-            const nx = cx + chosen[0];
-            const ny = cy + chosen[1];
-            if (nx > 0 && nx < grid.cols - 1 && ny > 0 && ny < grid.rows - 1) {
-              cx = nx;
-              cy = ny;
-              break;
-            }
+          const nx = cx + move[0];
+          const ny = cy + move[1];
+          if (nx > 0 && nx < world.cols - 1 && ny > 0 && ny < world.rows - 1) {
+            cx = nx;
+            cy = ny;
           }
         }
 
-        while (cx !== goalX) {
-          cx += Math.sign(goalX - cx);
+        while (cx !== goalCell.x) {
+          cx += Math.sign(goalCell.x - cx);
           path.add(`${cx},${cy}`);
         }
-        while (cy !== goalY) {
-          cy += Math.sign(goalY - cy);
+        while (cy !== goalCell.y) {
+          cy += Math.sign(goalCell.y - cy);
           path.add(`${cx},${cy}`);
         }
 
-        const clearRadius = 1;
-        for (let y = startCell.y - clearRadius; y <= startCell.y + clearRadius; y++) {
-          for (let x = startCell.x - clearRadius; x <= startCell.x + clearRadius; x++) {
-            if (x > 0 && x < grid.cols - 1 && y > 0 && y < grid.rows - 1) {
-              path.add(`${x},${y}`);
-            }
-          }
-        }
-        for (let y = goalCell.y - clearRadius; y <= goalCell.y + clearRadius; y++) {
-          for (let x = goalCell.x - clearRadius; x <= goalCell.x + clearRadius; x++) {
-            if (x > 0 && x < grid.cols - 1 && y > 0 && y < grid.rows - 1) {
-              path.add(`${x},${y}`);
-            }
+        for (let y = startCell.y - 1; y <= startCell.y + 1; y++) {
+          for (let x = startCell.x - 1; x <= startCell.x + 1; x++) {
+            if (x > 0 && x < world.cols - 1 && y > 0 && y < world.rows - 1) path.add(`${x},${y}`);
           }
         }
 
-        for (let y = 1; y < grid.rows - 1; y++) {
-          for (let x = 1; x < grid.cols - 1; x++) {
+        for (let y = goalCell.y - 1; y <= goalCell.y + 1; y++) {
+          for (let x = goalCell.x - 1; x <= goalCell.x + 1; x++) {
+            if (x > 0 && x < world.cols - 1 && y > 0 && y < world.rows - 1) path.add(`${x},${y}`);
+          }
+        }
+
+        for (let y = 1; y < world.rows - 1; y++) {
+          for (let x = 1; x < world.cols - 1; x++) {
             if (path.has(`${x},${y}`)) continue;
-            if (rng() < 0.28) gridData[y][x] = 1;
+            if (rng() < 0.28) grid[y][x] = 1;
           }
         }
 
-        const newBlocks = [];
-        for (let y = 0; y < grid.rows; y++) {
-          for (let x = 0; x < grid.cols; x++) {
-            if (gridData[y][x] === 1) {
-              newBlocks.push({
-                x: x * grid.tile,
-                y: y * grid.tile,
-                w: grid.tile,
-                h: grid.tile,
-              });
-            }
+        // Goal safety rule: allow at most one generated wall adjacent to the goal.
+        const goalAdjacent = [
+          [goalCell.x, goalCell.y - 1],
+          [goalCell.x, goalCell.y + 1],
+          [goalCell.x - 1, goalCell.y],
+          [goalCell.x + 1, goalCell.y],
+        ].filter(([x, y]) => x > 0 && x < world.cols - 1 && y > 0 && y < world.rows - 1);
+
+        const blockedGoalAdjacent = goalAdjacent.filter(([x, y]) => grid[y][x] === 1);
+        if (blockedGoalAdjacent.length > 1) {
+          for (let i = 1; i < blockedGoalAdjacent.length; i++) {
+            const [bx, by] = blockedGoalAdjacent[i];
+            grid[by][bx] = 0;
           }
         }
 
-        return newBlocks;
+        return grid;
       }
 
-      function setSeed(newSeed) {
-        seed = hashSeed(newSeed);
-        blocks = generateBlocks(seed);
-        goal.x = cellCenterX(goalCell.x);
-        goal.y = cellCenterY(goalCell.y);
-        seedValueEl.textContent = seed.toString();
-        bestTime = bestTimes[String(seed)] ?? null;
-        bestRun = bestRuns[String(seed)] ?? null;
-        reset();
+      function buildWalls(grid) {
+        tableGroup.remove(wallGroup);
+        wallGroup = new THREE.Group();
+        wallBoxes = [];
+
+        const boxGeo = new THREE.BoxGeometry(1, wallHeight, 1);
+        const borderBoxMat = new THREE.MeshStandardMaterial({
+          color: 0x4d46aa,
+          emissive: 0x2849c2,
+          emissiveIntensity: 1.28,
+          roughness: 0.26,
+          metalness: 0.28,
+        });
+        const innerBoxMat = new THREE.MeshStandardMaterial({
+          color: 0x003b9f,
+          emissive: 0x001a66,
+          emissiveIntensity: 0.82,
+          roughness: 0.32,
+          metalness: 0.2,
+          transparent: false,
+          opacity: 1,
+        });
+
+        for (let y = 0; y < world.rows; y++) {
+          for (let x = 0; x < world.cols; x++) {
+            if (grid[y][x] !== 1) continue;
+            const isBorder = x === 0 || x === world.cols - 1 || y === 0 || y === world.rows - 1;
+            const mesh = new THREE.Mesh(boxGeo, isBorder ? borderBoxMat : innerBoxMat);
+            mesh.position.set(x + 0.5, wallHeight / 2, y + 0.5);
+            wallGroup.add(mesh);
+            wallBoxes.push({ minX: x, maxX: x + 1, minY: y, maxY: y + 1 });
+          }
+        }
+
+        tableGroup.add(wallGroup);
       }
 
       function reset() {
-        player.x = cellCenterX(startCell.x);
-        player.y = cellCenterY(startCell.y);
+        const s = cellCenter(startCell.x, startCell.y);
+        player.x = s.x;
+        player.y = s.y;
         player.vx = 0;
         player.vy = 0;
-        player.currentSpeed = 0;
+        tilt.x = 0;
+        tilt.y = 0;
+        tilt.targetX = 0;
+        tilt.targetY = 0;
+        keys.clear();
         won = false;
-        elapsed = 0;
         timerRunning = false;
-        currentRun = [];
-        lastSample = 0;
-        trailPoints = [];
+        elapsed = 0;
+        stateValueEl.textContent = "Ready";
       }
 
-      function clamp(value, min, max) {
-        return Math.max(min, Math.min(max, value));
+      function setSeed(value) {
+        seed = hashSeed(value);
+        seedValueEl.textContent = String(seed);
+
+        const maze = generateMaze(seed);
+        buildWalls(maze);
+
+        const g = cellCenter(goalCell.x, goalCell.y);
+        goalMesh.position.set(g.x, 0.58, g.y);
+
+        bestTime = Number(bestBySeed[String(seed)]);
+        if (!Number.isFinite(bestTime) || bestTime < 0) bestTime = null;
+
+        reset();
       }
 
-      function circleRectCollision(cx, cy, r, rect) {
-        const closestX = clamp(cx, rect.x, rect.x + rect.w);
-        const closestY = clamp(cy, rect.y, rect.y + rect.h);
-        const dx = cx - closestX;
-        const dy = cy - closestY;
-        return dx * dx + dy * dy <= r * r;
+      function clamp(n, min, max) {
+        return Math.max(min, Math.min(max, n));
       }
 
-      function resolveMovement(dt) {
-        let desiredVX = 0;
-        let desiredVY = 0;
+      function collides(x, y) {
+        for (const box of wallBoxes) {
+          const cx = clamp(x, box.minX, box.maxX);
+          const cy = clamp(y, box.minY, box.maxY);
+          const dx = x - cx;
+          const dy = y - cy;
+          if (dx * dx + dy * dy <= player.radius * player.radius) return true;
+        }
+        return false;
+      }
 
-        if (keys.has("ArrowUp") || keys.has("KeyW")) desiredVY -= 1;
-        if (keys.has("ArrowDown") || keys.has("KeyS")) desiredVY += 1;
-        if (keys.has("ArrowLeft") || keys.has("KeyA")) desiredVX -= 1;
-        if (keys.has("ArrowRight") || keys.has("KeyD")) desiredVX += 1;
+      function hasMovementInput() {
+        return (
+          keys.has("ArrowUp") || keys.has("ArrowDown") || keys.has("ArrowLeft") || keys.has("ArrowRight") ||
+          keys.has("KeyW") || keys.has("KeyA") || keys.has("KeyS") || keys.has("KeyD")
+        );
+      }
 
-        const inputMagnitude = Math.hypot(desiredVX, desiredVY);
-        if (inputMagnitude > 0) {
-          player.currentSpeed = Math.min(player.maxSpeed, player.currentSpeed + player.accel * dt);
-        } else {
-          player.currentSpeed = Math.max(0, player.currentSpeed - player.accel * dt * 0.6);
+      function isFocused() {
+        return document.activeElement === canvas;
+      }
+
+      function updateMovement(dt) {
+        let inputX = 0;
+        let inputY = 0;
+        if (keys.has("ArrowUp") || keys.has("KeyW")) inputY -= 1;
+        if (keys.has("ArrowDown") || keys.has("KeyS")) inputY += 1;
+        if (keys.has("ArrowLeft") || keys.has("KeyA")) inputX -= 1;
+        if (keys.has("ArrowRight") || keys.has("KeyD")) inputX += 1;
+
+        tilt.targetX = inputX * tilt.max;
+        tilt.targetY = inputY * tilt.max;
+        const tiltLerp = 1 - Math.exp(-tilt.response * dt);
+        tilt.x += (tilt.targetX - tilt.x) * tiltLerp;
+        tilt.y += (tilt.targetY - tilt.y) * tiltLerp;
+
+        player.vx += Math.sin(tilt.x) * physics.gravity * dt;
+        player.vy += Math.sin(tilt.y) * physics.gravity * dt;
+        const drag = Math.exp(-physics.damping * dt);
+        player.vx *= drag;
+        player.vy *= drag;
+
+        const speed = Math.hypot(player.vx, player.vy);
+        if (speed > physics.maxSpeed) {
+          const scale = physics.maxSpeed / speed;
+          player.vx *= scale;
+          player.vy *= scale;
         }
 
-        const magnitude = inputMagnitude || 1;
-        const speed = inputMagnitude > 0 ? Math.max(player.speed, player.currentSpeed) : player.currentSpeed;
-        player.vx = (desiredVX / magnitude) * speed;
-        player.vy = (desiredVY / magnitude) * speed;
+        const totalMove = Math.hypot(player.vx * dt, player.vy * dt);
+        const stepSize = Math.max(0.06, player.radius * 0.45);
+        const subSteps = Math.max(1, Math.ceil(totalMove / stepSize));
+        let hitAny = false;
 
-        const nextX = player.x + player.vx * dt;
-        const nextY = player.y + player.vy * dt;
+        for (let i = 0; i < subSteps; i++) {
+          const stepDt = dt / subSteps;
+          const nx = player.x + player.vx * stepDt;
+          const ny = player.y + player.vy * stepDt;
 
-        let candidateX = nextX;
-        let hitWall = false;
-        for (const block of blocks) {
-          if (circleRectCollision(candidateX, player.y, player.radius, block)) {
-            candidateX = player.x;
-            hitWall = true;
-            break;
+          let nextX = nx;
+          let nextY = ny;
+
+          if (collides(nextX, player.y)) {
+            nextX = player.x;
+            player.vx *= -physics.restitution;
+            hitAny = true;
           }
-        }
-
-        let candidateY = nextY;
-        for (const block of blocks) {
-          if (circleRectCollision(candidateX, candidateY, player.radius, block)) {
-            candidateY = player.y;
-            hitWall = true;
-            break;
+          if (collides(nextX, nextY)) {
+            nextY = player.y;
+            player.vy *= -physics.restitution;
+            hitAny = true;
           }
+
+          player.x = nextX;
+          player.y = nextY;
         }
 
-        player.x = candidateX;
-        player.y = candidateY;
-
-        if (hitWall && timerRunning) {
-          const speed = Math.hypot(player.vx, player.vy);
-          const rawPenalty = speed * dt * collisionPenalty.rate;
+        if (hitAny && timerRunning) {
+          const impactSpeed = Math.hypot(player.vx, player.vy);
+          const rawPenalty = impactSpeed * dt * collisionPenalty.rate;
           const penalty = Math.max(collisionPenalty.minPerHit, Math.min(collisionPenalty.maxPerHit, rawPenalty));
           elapsed += penalty;
-          penaltyFlashUntil = performance.now() + 140;
-        }
-      }
-
-      function drawBlocks(scale, offsetX, offsetY) {
-        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--block");
-        ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue("--block-edge");
-        ctx.lineWidth = 2;
-        for (const block of blocks) {
-          const x = offsetX + block.x * scale;
-          const y = offsetY + block.y * scale;
-          const w = block.w * scale;
-          const h = block.h * scale;
-          ctx.fillRect(x, y, w, h);
-          ctx.strokeRect(x, y, w, h);
-        }
-      }
-
-      function drawGoal(scale, offsetX, offsetY) {
-        const size = goal.size * scale;
-        const x = offsetX + goal.x * scale;
-        const y = offsetY + goal.y * scale;
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.fillStyle = "rgba(255, 209, 102, 0.9)";
-        ctx.strokeStyle = "rgba(255, 209, 102, 0.4)";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        for (let i = 0; i < 5; i++) {
-          const angle = (Math.PI * 2 * i) / 5 - Math.PI / 2;
-          const innerAngle = angle + Math.PI / 5;
-          const outerRadius = size * 0.5;
-          const innerRadius = size * 0.22;
-          ctx.lineTo(Math.cos(angle) * outerRadius, Math.sin(angle) * outerRadius);
-          ctx.lineTo(Math.cos(innerAngle) * innerRadius, Math.sin(innerAngle) * innerRadius);
-        }
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-        ctx.restore();
-      }
-
-      function drawPlayer(scale, offsetX, offsetY) {
-        const x = offsetX + player.x * scale;
-        const y = offsetY + player.y * scale;
-        const r = player.radius * scale;
-
-        const isPenalized = performance.now() < penaltyFlashUntil;
-        const gradient = ctx.createRadialGradient(x - r * 0.4, y - r * 0.4, r * 0.3, x, y, r);
-        if (isPenalized) {
-          gradient.addColorStop(0, "#fff7b0");
-          gradient.addColorStop(0.6, "#ffd166");
-          gradient.addColorStop(1, "#fbbf24");
-        } else {
-          gradient.addColorStop(0, "#9efeff");
-          gradient.addColorStop(0.6, "#63f5c6");
-          gradient.addColorStop(1, "#2dd4bf");
+          const now = performance.now();
+          penaltyFlashUntil = now + 300;
+          hitToastUntil = now + 520;
+          hitToastEl.textContent = `+${penalty.toFixed(2)}s`;
         }
 
-        ctx.fillStyle = gradient;
-        ctx.shadowColor = isPenalized ? "rgba(255, 209, 102, 0.8)" : "rgba(90, 245, 210, 0.7)";
-        ctx.shadowBlur = 18;
-        ctx.beginPath();
-        ctx.arc(x, y, r, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowBlur = 0;
-      }
-
-      function checkGoal() {
-        const dx = player.x - goal.x;
-        const dy = player.y - goal.y;
-        const dist = Math.hypot(dx, dy);
-        if (dist < player.radius + goal.size * 0.4) {
-          won = true;
-          timerRunning = false;
-          if (bestTime === null || elapsed < bestTime) {
-            bestTime = elapsed;
-            if (storage) {
-              bestTimes[String(seed)] = bestTime;
-              storage.setItem("orbitMazeBestBySeed", JSON.stringify(bestTimes));
-              bestRuns[String(seed)] = currentRun;
-              storage.setItem("orbitMazeBestRunBySeed", JSON.stringify(bestRuns));
-              bestRun = currentRun;
-            }
-          }
-        }
-      }
-
-      function formatTime(value) {
-        const totalSeconds = Math.max(0, value);
-        const minutes = Math.floor(totalSeconds / 60);
-        const seconds = Math.floor(totalSeconds % 60);
-        const centis = Math.floor((totalSeconds * 100) % 100);
-        return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}.${String(centis).padStart(2, "0")}`;
+        if (Math.abs(player.vx) < 0.005) player.vx = 0;
+        if (Math.abs(player.vy) < 0.005) player.vy = 0;
       }
 
       function updateHud() {
@@ -533,194 +724,144 @@
         bestValueEl.textContent = bestTime === null ? "--:--.--" : formatTime(bestTime);
       }
 
-      function recordRunSample() {
-        if (!timerRunning || won) return;
-        const sampleInterval = 0.08;
-        if (elapsed - lastSample >= sampleInterval) {
-          currentRun.push({ t: elapsed, x: player.x, y: player.y });
-          lastSample = elapsed;
-        }
+      function updateCamera() {
+        const p = new THREE.Vector3();
+        playerMesh.getWorldPosition(p);
+        camera.position.set(p.x - 6.8, p.y + 11.6, p.z + 8.6);
+        camera.lookAt(p.x, p.y, p.z);
       }
 
-      function updateTrail() {
-        if (!timerRunning || won) return;
-        trailPoints.push({ x: player.x, y: player.y, life: 1 });
-        if (trailPoints.length > 220) {
-          trailPoints.shift();
-        }
-      }
-
-      function drawTrail(scale, offsetX, offsetY) {
-        if (trailPoints.length < 2) return;
-        ctx.save();
-        for (let i = 1; i < trailPoints.length; i++) {
-          const prev = trailPoints[i - 1];
-          const point = trailPoints[i];
-          point.life *= 0.975;
-          const alpha = Math.max(0.04, point.life * (i / trailPoints.length));
-          ctx.strokeStyle = `rgba(110, 220, 210, ${alpha})`;
-          ctx.lineWidth = 9 * scale * (i / trailPoints.length);
-          ctx.beginPath();
-          ctx.moveTo(offsetX + prev.x * scale, offsetY + prev.y * scale);
-          ctx.lineTo(offsetX + point.x * scale, offsetY + point.y * scale);
-          ctx.stroke();
-        }
-        ctx.restore();
-      }
-
-      function drawGhost(scale, offsetX, offsetY) {
-        if (!bestRun || bestRun.length < 2 || timerRunning === false) return;
-        const ghostTime = Math.min(elapsed, bestRun[bestRun.length - 1].t);
-        let idx = 0;
-        while (idx < bestRun.length - 1 && bestRun[idx + 1].t < ghostTime) {
-          idx++;
-        }
-        const a = bestRun[idx];
-        const b = bestRun[Math.min(idx + 1, bestRun.length - 1)];
-        const span = Math.max(0.001, b.t - a.t);
-        const t = Math.min(1, Math.max(0, (ghostTime - a.t) / span));
-        const gx = a.x + (b.x - a.x) * t;
-        const gy = a.y + (b.y - a.y) * t;
-        const r = player.radius * scale;
-        ctx.save();
-        ctx.globalAlpha = 0.35;
-        ctx.fillStyle = "#7dd3fc";
-        ctx.shadowColor = "rgba(125, 211, 252, 0.6)";
-        ctx.shadowBlur = 12;
-        ctx.beginPath();
-        ctx.arc(offsetX + gx * scale, offsetY + gy * scale, r, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      }
-
-      function render() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        const scale = Math.min(canvas.width / world.width, canvas.height / world.height);
-        const offsetX = (canvas.width - world.width * scale) / 2;
-        const offsetY = (canvas.height - world.height * scale) / 2;
-
-        ctx.fillStyle = "rgba(15, 24, 44, 0.9)";
-        ctx.fillRect(offsetX, offsetY, world.width * scale, world.height * scale);
-
-        drawBlocks(scale, offsetX, offsetY);
-        drawTrail(scale, offsetX, offsetY);
-        drawGhost(scale, offsetX, offsetY);
-        drawGoal(scale, offsetX, offsetY);
-        drawPlayer(scale, offsetX, offsetY);
-
-        if (won) {
-          ctx.fillStyle = "rgba(10, 15, 30, 0.65)";
-          ctx.fillRect(offsetX, offsetY, world.width * scale, world.height * scale);
-          ctx.fillStyle = "#fef3c7";
-          ctx.font = `${32 * scale}px "Space Grotesk", sans-serif`;
-          ctx.textAlign = "center";
-          ctx.fillText("You made it!", offsetX + (world.width * scale) / 2, offsetY + (world.height * scale) / 2);
-          ctx.font = `${16 * scale}px "Space Grotesk", sans-serif`;
-          ctx.fillText(
-            "Press R to retry or N for a new seed",
-            offsetX + (world.width * scale) / 2,
-            offsetY + (world.height * scale) / 2 + 32
-          );
+      function updateWinState() {
+        const gx = goalMesh.position.x;
+        const gy = goalMesh.position.z;
+        const d = Math.hypot(player.x - gx, player.y - gy);
+        if (d <= player.radius + 0.32) {
+          won = true;
+          timerRunning = false;
+          stateValueEl.textContent = "Goal reached";
+          if (bestTime === null || elapsed < bestTime) {
+            bestTime = elapsed;
+            bestBySeed[String(seed)] = bestTime;
+            safeStorageSet("maze3dBestBySeed", JSON.stringify(bestBySeed));
+          }
         }
       }
 
       function loop(now) {
-        const dt = Math.min((now - lastTime) / 1000, 0.02);
+        const dt = Math.min((now - lastTime) / 1000, 0.03);
         lastTime = now;
 
+        goalMesh.rotation.y += dt * 1.9;
+        goalMesh.position.y = 0.58 + Math.sin(now * 0.004) * 0.08;
+
         if (!won) {
-          if (timerRunning) {
-            elapsed += dt;
-            recordRunSample();
-            updateTrail();
-          }
-          resolveMovement(dt);
-          checkGoal();
+          if (timerRunning) elapsed += dt;
+          updateMovement(dt);
+          updateWinState();
         }
 
+        tablePivot.rotation.z = -tilt.x * 0.92;
+        tablePivot.rotation.x = tilt.y * 0.92;
+        playerMesh.position.set(player.x, 0.36, player.y);
+        const hot = performance.now() < penaltyFlashUntil;
+        playerMesh.material.color.setHex(hot ? 0xffff6b : 0xd7fffd);
+        playerMesh.material.emissive.setHex(hot ? 0xfff066 : 0x37ffec);
+        playerGlow.material.color.setHex(hot ? 0xfff066 : 0x37ffec);
+        playerGlow.material.opacity = hot ? 1 : 0.8;
+        playerLamp.color.setHex(hot ? 0xfff066 : 0x37ffec);
+        playerLamp.intensity = hot ? 5.2 : 2.8;
+        goalGlow.material.opacity = 0.85 + Math.sin(now * 0.006) * 0.1;
+        goalLamp.intensity = 3.3 + Math.sin(now * 0.004) * 0.45;
+        beaconBeam.material.opacity = 0.33 + Math.sin(now * 0.005) * 0.12;
+        beaconBeam.scale.set(1, 1 + Math.sin(now * 0.003) * 0.08, 1);
+
+        if (now < hitToastUntil) {
+          const progress = 1 - (hitToastUntil - now) / 520;
+          const wp = playerMesh.getWorldPosition(new THREE.Vector3());
+          wp.y += 1.05;
+          wp.project(camera);
+          const sx = (wp.x * 0.5 + 0.5) * canvas.clientWidth;
+          const sy = (-wp.y * 0.5 + 0.5) * canvas.clientHeight;
+          hitToastEl.style.opacity = String(Math.max(0, 1 - progress * 1.1));
+          hitToastEl.style.left = `${sx}px`;
+          hitToastEl.style.top = `${sy - progress * 24}px`;
+        } else {
+          hitToastEl.style.opacity = "0";
+        }
+
+        updateCamera();
         updateHud();
-        render();
+        renderer.render(scene, camera);
         requestAnimationFrame(loop);
       }
 
-      const movementKeys = new Set(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "KeyW", "KeyA", "KeyS", "KeyD"]);
-
-      function isGameFocused() {
-        return document.activeElement === canvas;
+      function resize() {
+        const w = canvas.clientWidth;
+        const h = canvas.clientHeight;
+        if (!w || !h) return;
+        renderer.setSize(w, h, false);
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
       }
 
+      window.addEventListener("resize", resize);
+
       window.addEventListener("keydown", (event) => {
-        if (movementKeys.has(event.code)) {
-          if (isGameFocused()) {
-            event.preventDefault();
-          }
+        if (moveKeys.has(event.code)) {
+          if (!isFocused()) return;
+          event.preventDefault();
         }
+
         keys.add(event.code);
+
         if (event.code === "KeyR") reset();
         if (event.code === "KeyN") setSeed(Date.now());
+
+        if (!timerRunning && !won && hasMovementInput()) {
+          timerRunning = true;
+          stateValueEl.textContent = "Running";
+        }
       });
 
       window.addEventListener("keyup", (event) => {
-        if (movementKeys.has(event.code)) {
-          if (isGameFocused()) {
-            event.preventDefault();
-          }
+        if (moveKeys.has(event.code)) {
+          if (!isFocused()) return;
+          event.preventDefault();
         }
         keys.delete(event.code);
       });
 
-      function hasMovementInput() {
-        return (
-          keys.has("ArrowUp") ||
-          keys.has("ArrowDown") ||
-          keys.has("ArrowLeft") ||
-          keys.has("ArrowRight") ||
-          keys.has("KeyW") ||
-          keys.has("KeyA") ||
-          keys.has("KeyS") ||
-          keys.has("KeyD")
-        );
-      }
-
-      window.addEventListener("keydown", () => {
-        if (!timerRunning && !won && hasMovementInput()) {
-          timerRunning = true;
-        }
+      window.addEventListener("blur", () => keys.clear());
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState !== "visible") keys.clear();
       });
 
       if (storage) {
-        const storedBestMap = storage.getItem("orbitMazeBestBySeed");
-        if (storedBestMap) {
-          try {
-            const parsed = JSON.parse(storedBestMap);
-            if (parsed && typeof parsed === "object") {
-              bestTimes = parsed;
+        try {
+          const parsed = JSON.parse(storage.getItem("maze3dBestBySeed") || "{}");
+          if (parsed && typeof parsed === "object") {
+            const clean = {};
+            for (const [k, v] of Object.entries(parsed)) {
+              const num = Number(v);
+              if (Number.isFinite(num) && num >= 0) clean[k] = num;
             }
-          } catch (error) {
-            bestTimes = {};
+            bestBySeed = clean;
           }
-        }
-        const storedBestRunMap = storage.getItem("orbitMazeBestRunBySeed");
-        if (storedBestRunMap) {
-          try {
-            const parsed = JSON.parse(storedBestRunMap);
-            if (parsed && typeof parsed === "object") {
-              bestRuns = parsed;
-            }
-          } catch (error) {
-            bestRuns = {};
-          }
+        } catch {
+          bestBySeed = {};
         }
       }
 
-      const initialSeed = getSeedFromUrl() ?? Date.now();
-      setSeed(initialSeed);
+      resize();
+      setSeed(getSeedFromUrl() ?? Date.now());
       canvas.focus();
-      canvas.addEventListener("pointerdown", () => {
-        canvas.focus();
-      });
+      canvas.addEventListener("pointerdown", () => canvas.focus());
       requestAnimationFrame(loop);
+      } catch (error) {
+        console.error(error);
+        stateValueEl.textContent = "3D init failed. Open console for details.";
+      }
+      }
     </script>
   </body>
 </html>
