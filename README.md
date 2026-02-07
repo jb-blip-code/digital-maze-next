@@ -12,3 +12,7 @@ Note: internet access is still required because Three.js is loaded from CDN.
 - Move: `WASD` or Arrow keys
 - Reset run: `R`
 - Generate new seed: `N`
+
+## iOS App Wrapper
+- Native iOS wrapper sources are in `/Users/jbenyeda/Documents/New project/digital-maze-next/ios/DigitalMazeiOS`.
+- Includes gyroscope bridge (`CoreMotion` -> `window.setNativeTilt(x, y)`).
