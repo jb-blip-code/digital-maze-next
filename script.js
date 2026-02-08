@@ -79,13 +79,12 @@ const UPGRADE_DEFS = [
   },
   {
     id: "tensor-bloom-array",
-    name: "Tensor Bloom Array",
-    description: "+1200 per click, +520 bits/sec",
+    name: "Recursive Learning",
+    description: "+0.1x bits gained multiplier",
     baseCost: 120000,
     growth: 2,
     apply: (state) => {
-      state.perClick += 1200;
-      state.perSecond += 520;
+      state.bitsMultiplier += 0.1;
     },
   },
   {
@@ -116,6 +115,7 @@ const defaultState = () => ({
   bits: 0,
   perClick: 1,
   perSecond: 0,
+  bitsMultiplier: 1,
   autoIntervalMs: BASE_AUTO_INTERVAL_MS,
   upgrades: Object.fromEntries(UPGRADE_DEFS.map((u) => [u.id, 0])),
 });
@@ -138,7 +138,7 @@ render();
 restartPassiveLoop();
 
 clickBtn.addEventListener("click", () => {
-  state.bits += state.perClick;
+  state.bits += getEffectivePerClick();
   render();
 });
 
@@ -195,7 +195,7 @@ function calculateCost(upgrade, owned) {
 
 function render() {
   bitsEl.textContent = formatNum(state.bits);
-  perClickEl.textContent = formatNum(state.perClick);
+  perClickEl.textContent = formatNum(getEffectivePerClick());
   perSecondEl.textContent = formatNum(getEffectivePerSecond());
 
   for (const upgrade of UPGRADE_DEFS) {
@@ -226,6 +226,9 @@ function loadState() {
     }
     if (typeof parsed.perSecond === "number" && Number.isFinite(parsed.perSecond)) {
       clean.perSecond = Math.max(0, parsed.perSecond);
+    }
+    if (typeof parsed.bitsMultiplier === "number" && Number.isFinite(parsed.bitsMultiplier)) {
+      clean.bitsMultiplier = Math.max(1, parsed.bitsMultiplier);
     }
     if (typeof parsed.autoIntervalMs === "number" && Number.isFinite(parsed.autoIntervalMs)) {
       clean.autoIntervalMs = Math.min(
@@ -259,7 +262,7 @@ function restartPassiveLoop() {
 
   const tick = () => {
     if (state.perSecond > 0) {
-      state.bits += state.perSecond;
+      state.bits += state.perSecond * state.bitsMultiplier;
       render();
     }
     passiveTimerId = window.setTimeout(tick, state.autoIntervalMs);
@@ -269,7 +272,11 @@ function restartPassiveLoop() {
 }
 
 function getEffectivePerSecond() {
-  return state.perSecond * (BASE_AUTO_INTERVAL_MS / state.autoIntervalMs);
+  return state.perSecond * state.bitsMultiplier * (BASE_AUTO_INTERVAL_MS / state.autoIntervalMs);
+}
+
+function getEffectivePerClick() {
+  return state.perClick * state.bitsMultiplier;
 }
 
 function formatNum(value) {
