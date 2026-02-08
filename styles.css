@@ -62,6 +62,27 @@ body {
   margin-bottom: 1.2rem;
 }
 
+.topbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.toggle input {
+  accent-color: var(--accent);
+}
+
 .eyebrow {
   margin: 0;
   font-size: 0.78rem;
@@ -254,6 +275,15 @@ h1 {
 }
 
 @media (max-width: 620px) {
+  .topbar {
+    flex-direction: column;
+  }
+
+  .topbar-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
   .hud {
     grid-template-columns: 1fr;
   }
