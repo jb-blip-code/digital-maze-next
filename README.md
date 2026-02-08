@@ -1,18 +1,8 @@
-# Digital Maze 3D
+# Digital Clicker
 
-Browser-based 3D maze game using Three.js and a seeded maze generator.
+Starter repository for the **Digital Clicker** project.
 
-## Run
-1. Primary (no local server): open `index.html` directly in a modern browser.
-2. Fallback: use a local static server only if your browser blocks local file execution.
-
-Note: internet access is still required because Three.js is loaded from CDN.
-
-## Controls
-- Move: `WASD` or Arrow keys
-- Reset run: `R`
-- Generate new seed: `N`
-
-## iOS App Wrapper
-- Native iOS wrapper sources are in `/Users/jbenyeda/Documents/New project/digital-maze-next/ios/DigitalMazeiOS`.
-- Includes gyroscope bridge (`CoreMotion` -> `window.setNativeTilt(x, y)`).
+## Getting Started
+- Define core clicker loop (click value, upgrades, progression)
+- Build MVP UI and save/load system
+- Iterate with balancing and polish
